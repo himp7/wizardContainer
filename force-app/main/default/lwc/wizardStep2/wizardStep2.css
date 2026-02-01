@@ -3,3 +3,14 @@
     flex-wrap: wrap;
     gap: 0.5rem;
 }
+
+.category-section {
+    padding: 0.75rem;
+    background-color: #fafaf9;
+    border-radius: 0.25rem;
+    border: 1px solid #e5e5e5;
+}
+
+.slds-border_top {
+    border-top: 1px solid #dddbda;
+}

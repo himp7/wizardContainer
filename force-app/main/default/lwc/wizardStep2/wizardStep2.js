@@ -8,8 +8,9 @@ export default class WizardStep2 extends LightningElement {
     
     @track triggerTypes = [];
     @track selectedCategories = []; // Array of category objects: {label, value, apiName}
-    @track triggerOptionsMap = new Map(); // Map<categoryValue, {label, value, apiName, options[]}>
-    @track selectedOptionsMap = new Map(); // Map<categoryValue, selectedOptionValues[]>
+    
+    // Changed: Use @track for proper reactivity
+    @track selectedOptionsMap = {}; // Object instead of Map for better reactivity
     
     selectedCategory = ''; // Currently selected in dropdown
     currentTriggerOptions = []; // Options for currently selected category
@@ -29,7 +30,7 @@ export default class WizardStep2 extends LightningElement {
         if (this.ruleData && this.ruleData.triggerTypes && this.ruleData.triggerTypes.length > 0) {
             this.selectedCategories = [...this.ruleData.triggerTypes];
             if (this.ruleData.triggerOptionsMap) {
-                this.selectedOptionsMap = new Map(Object.entries(this.ruleData.triggerOptionsMap));
+                this.selectedOptionsMap = { ...this.ruleData.triggerOptionsMap };
             }
         }
     }
@@ -92,7 +93,10 @@ export default class WizardStep2 extends LightningElement {
             }];
             
             // Initialize empty selection for this category
-            this.selectedOptionsMap.set(categoryValue, []);
+            this.selectedOptionsMap = {
+                ...this.selectedOptionsMap,
+                [categoryValue]: []
+            };
         }
     }
 
@@ -126,7 +130,9 @@ export default class WizardStep2 extends LightningElement {
         this.selectedCategories = this.selectedCategories.filter(cat => cat.value !== categoryValue);
         
         // Remove associated options
-        this.selectedOptionsMap.delete(categoryValue);
+        const newOptionsMap = { ...this.selectedOptionsMap };
+        delete newOptionsMap[categoryValue];
+        this.selectedOptionsMap = newOptionsMap;
         
         // Clear current selection if it was this category
         if (this.selectedCategory === categoryValue) {
@@ -145,10 +151,10 @@ export default class WizardStep2 extends LightningElement {
         }
 
         // Get current selections for this category
-        let currentSelections = this.selectedOptionsMap.get(this.selectedCategory) || [];
+        let currentSelections = this.selectedOptionsMap[this.selectedCategory] || [];
         
         if (isSelected) {
-            // Add option
+            // Add option if not already present
             if (!currentSelections.includes(value)) {
                 currentSelections = [...currentSelections, value];
             }
@@ -157,15 +163,26 @@ export default class WizardStep2 extends LightningElement {
             currentSelections = currentSelections.filter(v => v !== value);
         }
 
-        this.selectedOptionsMap.set(this.selectedCategory, currentSelections);
+        // Update the map with new array - triggers reactivity
+        this.selectedOptionsMap = {
+            ...this.selectedOptionsMap,
+            [this.selectedCategory]: currentSelections
+        };
+        
+        console.log('Updated selections for', this.selectedCategory, ':', currentSelections);
     }
 
     handlePillRemove(event) {
         const { category, value } = event.detail;
         
-        let currentSelections = this.selectedOptionsMap.get(category) || [];
+        let currentSelections = this.selectedOptionsMap[category] || [];
         currentSelections = currentSelections.filter(v => v !== value);
-        this.selectedOptionsMap.set(category, currentSelections);
+        
+        // Update the map - triggers reactivity
+        this.selectedOptionsMap = {
+            ...this.selectedOptionsMap,
+            [category]: currentSelections
+        };
     }
 
     handleBack() {
@@ -178,14 +195,9 @@ export default class WizardStep2 extends LightningElement {
         }
 
         // Prepare data
-        const triggerOptionsMap = {};
-        this.selectedOptionsMap.forEach((options, category) => {
-            triggerOptionsMap[category] = options;
-        });
-
         const stepData = {
             triggerTypes: this.selectedCategories,
-            triggerOptionsMap: triggerOptionsMap
+            triggerOptionsMap: this.selectedOptionsMap
         };
 
         this.dispatchEvent(new CustomEvent('stepdata', {
@@ -206,7 +218,7 @@ export default class WizardStep2 extends LightningElement {
 
         // Each selected category must have at least 1 option
         for (let category of this.selectedCategories) {
-            const options = this.selectedOptionsMap.get(category.value) || [];
+            const options = this.selectedOptionsMap[category.value] || [];
             if (options.length === 0) {
                 this.errorMessage = `Please select at least one option for ${category.label}`;
                 return false;
@@ -242,19 +254,45 @@ export default class WizardStep2 extends LightningElement {
     }
 
     get currentSelectedOptions() {
-        return this.selectedOptionsMap.get(this.selectedCategory) || [];
+        return this.selectedOptionsMap[this.selectedCategory] || [];
+    }
+
+    get currentCategoryLabel() {
+        const category = this.selectedCategories.find(cat => cat.value === this.selectedCategory);
+        return category ? category.label : '';
+    }
+
+    get hasCurrentCategorySelections() {
+        if (!this.selectedCategory) return false;
+        const selections = this.selectedOptionsMap[this.selectedCategory] || [];
+        return selections.length > 0;
+    }
+
+    get currentCategoryPills() {
+        if (!this.selectedCategory) return [];
+        
+        const selectedOptionValues = this.selectedOptionsMap[this.selectedCategory] || [];
+        const cachedOptions = this.triggerOptionsCache.get(this.selectedCategory) || [];
+        
+        return selectedOptionValues.map(optValue => {
+            const option = cachedOptions.find(o => o.value === optValue);
+            return {
+                label: option ? option.label : optValue,
+                value: optValue
+            };
+        });
     }
 
     get hasSelectedOptions() {
-        return this.selectedOptionsMap.size > 0 && 
-               Array.from(this.selectedOptionsMap.values()).some(opts => opts.length > 0);
+        return Object.keys(this.selectedOptionsMap).length > 0 && 
+               Object.values(this.selectedOptionsMap).some(opts => opts.length > 0);
     }
 
     get categoriesWithOptions() {
         const result = [];
         
         this.selectedCategories.forEach(category => {
-            const selectedOptionValues = this.selectedOptionsMap.get(category.value) || [];
+            const selectedOptionValues = this.selectedOptionsMap[category.value] || [];
             
             if (selectedOptionValues.length > 0) {
                 // Get full option objects from cache

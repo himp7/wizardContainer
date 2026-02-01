@@ -15,6 +15,16 @@ export default class WizardStep3 extends LightningElement {
             this.quantity = this.ruleData.quantity || null;
         }
     }
+get caseTypeOptions() {
+    return [
+        { label: 'Service Request', value: 'Service Request' },
+        { label: 'Incident', value: 'Incident' },
+        { label: 'Problem', value: 'Problem' },
+        { label: 'Change Request', value: 'Change Request' },
+        { label: 'Question', value: 'Question' }
+    ];
+}
+    
 
     handleInputChange(event) {
         const field = event.target.name;

@@ -55,24 +55,43 @@
                     onoptionselect={handleOptionSelect}
                     class="slds-m-bottom_medium">
                 </c-searchable-dropdown>
+                
+                <!-- Show pills for currently selected category options -->
+                <template if:true={hasCurrentCategorySelections}>
+                    <div class="slds-m-top_small slds-m-bottom_medium">
+                        <label class="slds-form-element__label slds-text-body_small">
+                            Selected for {currentCategoryLabel}:
+                        </label>
+                        <c-pill-container
+                            pills={currentCategoryPills}
+                            category={selectedCategory}
+                            onpillremove={handlePillRemove}
+                            class="slds-m-top_xx-small">
+                        </c-pill-container>
+                    </div>
+                </template>
             </template>
 
-            <!-- Selected Options as Pills (grouped by category) -->
+            <!-- All Selected Options as Pills (grouped by category) -->
             <template if:true={hasSelectedOptions}>
-                <div class="slds-m-top_medium">
-                    <label class="slds-form-element__label">Selected Options</label>
-                    <template for:each={categoriesWithOptions} for:item="category">
-                        <div key={category.name} class="slds-m-bottom_medium">
-                            <div class="slds-text-title slds-m-bottom_x-small">
-                                {category.label}
+                <div class="slds-m-top_large">
+                    <div class="slds-border_top slds-p-top_medium">
+                        <label class="slds-form-element__label slds-text-heading_small">
+                            All Selected Options
+                        </label>
+                        <template for:each={categoriesWithOptions} for:item="category">
+                            <div key={category.name} class="slds-m-top_medium category-section">
+                                <div class="slds-text-title slds-text-color_weak slds-m-bottom_x-small">
+                                    {category.label}
+                                </div>
+                                <c-pill-container
+                                    pills={category.options}
+                                    category={category.name}
+                                    onpillremove={handlePillRemove}>
+                                </c-pill-container>
                             </div>
-                            <c-pill-container
-                                pills={category.options}
-                                category={category.name}
-                                onpillremove={handlePillRemove}>
-                            </c-pill-container>
-                        </div>
-                    </template>
+                        </template>
+                    </div>
                 </div>
             </template>
 

@@ -10,20 +10,18 @@
             </div>
 
             <!-- Case Type -->
-            <div class="slds-m-bottom_medium">
-                <lightning-input
-                    label="Case Type"
-                    name="caseType"
-                    type="text"
-                    value={caseType}
-                    onchange={handleInputChange}
-                    required
-                    max-length="80"
-                    message-when-value-missing="Case type is required"
-                    placeholder="e.g., Service Request, Incident, Problem">
-                </lightning-input>
-            </div>
-
+<div class="slds-m-bottom_medium">
+    <lightning-combobox
+        label="Case Type"
+        name="caseType"
+        placeholder="Select a case type"
+        options={caseTypeOptions}
+        value={caseType}
+        onchange={handleInputChange}
+        required
+        message-when-value-missing="Case type is required">
+    </lightning-combobox>
+</div>
             <!-- Quantity -->
             <div class="slds-m-bottom_medium">
                 <lightning-input

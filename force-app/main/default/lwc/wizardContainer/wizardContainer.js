@@ -1,8 +1,10 @@
-import { LightningElement, track } from 'lwc';
+import { LightningElement, track, api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-// import saveRule from '@salesforce/apex/WizardController.saveRule';
+import saveRule from '@salesforce/apex/WizardController.saveRule';
 
 export default class WizardContainer extends LightningElement {
+    
+    @api isOpen = false; // Controlled by parent component
     
     @track currentStep = 1;
     @track ruleData = {
@@ -68,52 +70,56 @@ export default class WizardContainer extends LightningElement {
     }
 
     handleCancel() {
-        // Close the modal/wizard
+        // Reset wizard state
+        this.resetWizard();
+        
+        // Dispatch close event to parent component
         this.dispatchEvent(new CustomEvent('close'));
     }
 
     async handleCreate() {
-    // try {
-    //     // Show loading in step 4
-    //     const step4Component = this.template.querySelector('c-wizard-step4');
-    //     if (step4Component) {
-    //         step4Component.isLoading = true;
-    //     }
-
-    //     // Prepare data for Apex
-    //     const ruleDataJSON = JSON.stringify(this.ruleData);
-        
-    //     // Call Apex
-    //     const response = await saveRule({ ruleDataJSON });
-
-    //     if (response.success) {
-    //         // Show success toast
-    //         this.showToast('Success', response.message, 'success');
+        try {
+            // Prepare data for Apex
+            const ruleDataJSON = JSON.stringify(this.ruleData);
             
-    //         // Dispatch event to parent (e.g., refresh list view)
-    //         this.dispatchEvent(new CustomEvent('rulesaved', {
-    //             detail: { ruleId: response.ruleId }
-    //         }));
-            
-    //         // Close wizard
-    //         this.handleCancel();
-            
-    //     } else {
-    //         // Show error in step 4
-    //         if (step4Component) {
-    //             step4Component.isLoading = false;
-    //             step4Component.errorMessage = response.errorMessage;
-    //         }
-    //     }
+            // Call Apex
+            const response = await saveRule({ ruleDataJSON });
 
-    // } catch (error) {
-    //     const step4Component = this.template.querySelector('c-wizard-step4');
-    //     if (step4Component) {
-    //         step4Component.isLoading = false;
-    //         step4Component.errorMessage = error.body?.message || 'An unexpected error occurred';
-    //     }
-    // }
-}
+            if (response.success) {
+                // Show success toast
+                this.showToast('Success', response.message, 'success');
+                
+                // Dispatch event to parent with rule ID
+                this.dispatchEvent(new CustomEvent('rulesaved', {
+                    detail: { ruleId: response.ruleId }
+                }));
+                
+                // Reset and close wizard
+                this.resetWizard();
+                this.dispatchEvent(new CustomEvent('close'));
+                
+            } else {
+                this.showToast('Error', response.errorMessage, 'error');
+            }
+
+        } catch (error) {
+            this.showToast('Error', error.body?.message || 'Unknown error occurred', 'error');
+        }
+    }
+
+    resetWizard() {
+        // Reset to initial state
+        this.currentStep = 1;
+        this.ruleData = {
+            ruleName: '',
+            description: '',
+            triggerTypes: [],
+            triggerOptionsMap: {},
+            caseType: '',
+            quantity: null
+        };
+    }
+
     showToast(title, message, variant) {
         const evt = new ShowToastEvent({
             title: title,
@@ -121,5 +127,17 @@ export default class WizardContainer extends LightningElement {
             variant: variant
         });
         this.dispatchEvent(evt);
+    }
+
+    // Public API methods (optional - parent can also just set isOpen)
+    @api
+    openWizard() {
+        this.resetWizard();
+        // Parent should set isOpen = true
+    }
+
+    @api
+    closeWizard() {
+        this.handleCancel();
     }
 }

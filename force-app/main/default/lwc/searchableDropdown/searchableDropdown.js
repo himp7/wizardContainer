@@ -10,8 +10,21 @@ export default class SearchableDropdown extends LightningElement {
     
     @track searchTerm = '';
     @track isOpen = false;
+    @track _selectedValues = []; // Internal tracking of selected values
     
     blurTimeout;
+
+    connectedCallback() {
+        // Initialize internal selected values
+        this._selectedValues = [...this.selectedValues];
+    }
+
+    // Handle changes to selectedValues API property from parent
+    updated(changedProperties) {
+        if (changedProperties.has('selectedValues')) {
+            this._selectedValues = [...this.selectedValues];
+        }
+    }
 
     get dropdownClass() {
         return `slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click ${this.isOpen ? 'slds-is-open' : ''}`;
@@ -24,7 +37,7 @@ export default class SearchableDropdown extends LightningElement {
             .filter(opt => opt.label.toLowerCase().includes(searchLower))
             .map(opt => ({
                 ...opt,
-                isSelected: this.selectedValues.includes(opt.value)
+                isSelected: this._selectedValues.includes(opt.value)
             }));
     }
 
@@ -35,18 +48,18 @@ export default class SearchableDropdown extends LightningElement {
     // Map selected values to pill objects { value, label }
     get selectedPills() {
         const map = new Map(this.options.map(o => [o.value, o.label]));
-        const vals = this.selectedValues || [];
+        const vals = this._selectedValues || [];
         const visible = vals.slice(0, this.maxVisiblePills);
         return visible.map(v => ({ value: v, label: map.get(v) || v }));
     }
 
     get hasOverflow() {
-        const len = (this.selectedValues && this.selectedValues.length) || 0;
+        const len = (this._selectedValues && this._selectedValues.length) || 0;
         return len > this.maxVisiblePills;
     }
 
     get overflowCount() {
-        const len = (this.selectedValues && this.selectedValues.length) || 0;
+        const len = (this._selectedValues && this._selectedValues.length) || 0;
         return len > this.maxVisiblePills ? (len - this.maxVisiblePills) : 0;
     }
 
@@ -70,7 +83,7 @@ export default class SearchableDropdown extends LightningElement {
         event.stopPropagation();
         
         const value = event.currentTarget.dataset.value;
-        const isCurrentlySelected = this.selectedValues.includes(value);
+        const isCurrentlySelected = this._selectedValues.includes(value);
         
         this.dispatchSelectionEvent(value, !isCurrentlySelected);
     }

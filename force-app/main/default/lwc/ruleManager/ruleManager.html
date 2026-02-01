@@ -1,0 +1,61 @@
+<template>
+    <lightning-card title="Rules Management" icon-name="standard:record">
+        
+        <!-- Actions Section -->
+        <div slot="actions">
+            <lightning-button 
+                variant="brand" 
+                label="Create New Rule" 
+                onclick={handleOpenWizard}
+                icon-name="utility:add">
+            </lightning-button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="slds-p-around_medium">
+            
+            <!-- Rules List/Table would go here -->
+            <template if:true={hasRules}>
+                <div class="slds-m-bottom_medium">
+                    <p class="slds-text-body_regular">
+                        {ruleCount} rule(s) found
+                    </p>
+                </div>
+                
+                <!-- Simple rules list example -->
+                <lightning-datatable
+                    key-field="Id"
+                    data={rules}
+                    columns={columns}
+                    hide-checkbox-column>
+                </lightning-datatable>
+            </template>
+
+            <template if:false={hasRules}>
+                <div class="slds-align_absolute-center slds-m-vertical_large">
+                    <lightning-icon icon-name="custom:custom48" size="large"></lightning-icon>
+                    <p class="slds-text-heading_small slds-m-top_medium">No rules yet</p>
+                    <p class="slds-text-body_regular slds-text-color_weak slds-m-top_small">
+                        Create your first rule to get started
+                    </p>
+                    <lightning-button 
+                        variant="brand" 
+                        label="Create Rule" 
+                        onclick={handleOpenWizard}
+                        class="slds-m-top_medium"
+                        icon-name="utility:add">
+                    </lightning-button>
+                </div>
+            </template>
+
+        </div>
+
+        <!-- The Wizard Component (controlled by parent) -->
+        <c-wizard-container 
+            is-open={showWizard}
+            onclose={handleCloseWizard}
+            onrulesaved={handleRuleSaved}>
+        </c-wizard-container>
+
+    </lightning-card>
+</template>

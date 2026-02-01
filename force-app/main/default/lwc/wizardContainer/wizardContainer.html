@@ -1,64 +1,74 @@
 <template>
-    <div class="slds-modal slds-fade-in-open">
-        <div class="slds-modal__container wizard-container">
-            
-            <!-- Header -->
-            <header class="slds-modal__header">
-                <h2 class="slds-text-heading_medium">Create New Rule</h2>
-            </header>
+    <!-- Only show modal if isOpen is true -->
+    <template if:true={isOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-modal="true">
+            <div class="slds-modal__container wizard-container">
+                
+                <!-- Header with Close Button -->
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" 
+                            title="Close" 
+                            onclick={handleCancel}>
+                        <lightning-icon icon-name="utility:close" alternative-text="close" size="small"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 class="slds-text-heading_medium slds-hyphenate">Create New Rule</h2>
+                </header>
 
-            <!-- Progress Indicator -->
-            <div class="slds-modal__content slds-p-around_none">
-                <lightning-progress-indicator 
-                    current-step={currentStepName} 
-                    type="path" 
-                    variant="base"
-                    class="slds-m-bottom_medium">
-                    <lightning-progress-step label="Rule Details" value="step1"></lightning-progress-step>
-                    <lightning-progress-step label="Trigger Selection" value="step2"></lightning-progress-step>
-                    <lightning-progress-step label="Case Details" value="step3"></lightning-progress-step>
-                    <lightning-progress-step label="Summary" value="step4"></lightning-progress-step>
-                </lightning-progress-indicator>
+                <!-- Modal Content -->
+                <div class="slds-modal__content slds-p-around_none">
+                    <!-- Progress Indicator -->
+                    <lightning-progress-indicator 
+                        current-step={currentStepName} 
+                        type="path" 
+                        variant="base"
+                        class="slds-m-bottom_medium">
+                        <lightning-progress-step label="Rule Details" value="step1"></lightning-progress-step>
+                        <lightning-progress-step label="Trigger Selection" value="step2"></lightning-progress-step>
+                        <lightning-progress-step label="Case Details" value="step3"></lightning-progress-step>
+                        <lightning-progress-step label="Summary" value="step4"></lightning-progress-step>
+                    </lightning-progress-indicator>
 
-                <!-- Step 1: Rule Details -->
-                <template if:true={isStep1}>
-                    <c-wizard-step1 
-                        rule-data={ruleData}
-                        onstepdata={handleStepData}
-                        oncancel={handleCancel}>
-                    </c-wizard-step1>
-                </template>
+                    <!-- Step 1: Rule Details -->
+                    <template if:true={isStep1}>
+                        <c-wizard-step1 
+                            rule-data={ruleData}
+                            onstepdata={handleStepData}
+                            oncancel={handleCancel}>
+                        </c-wizard-step1>
+                    </template>
 
-                <!-- Step 2: Trigger Selection -->
-                <template if:true={isStep2}>
-                    <c-wizard-step2 
-                        rule-data={ruleData}
-                        onstepdata={handleStepData}
-                        onback={handleBack}>
-                    </c-wizard-step2>
-                </template>
+                    <!-- Step 2: Trigger Selection -->
+                    <template if:true={isStep2}>
+                        <c-wizard-step2 
+                            rule-data={ruleData}
+                            onstepdata={handleStepData}
+                            onback={handleBack}>
+                        </c-wizard-step2>
+                    </template>
 
-                <!-- Step 3: Case Details -->
-                <template if:true={isStep3}>
-                    <c-wizard-step3 
-                        rule-data={ruleData}
-                        onstepdata={handleStepData}
-                        onback={handleBack}>
-                    </c-wizard-step3>
-                </template>
+                    <!-- Step 3: Case Details -->
+                    <template if:true={isStep3}>
+                        <c-wizard-step3 
+                            rule-data={ruleData}
+                            onstepdata={handleStepData}
+                            onback={handleBack}>
+                        </c-wizard-step3>
+                    </template>
 
-                <!-- Step 4: Summary -->
-                <template if:true={isStep4}>
-                    <c-wizard-step4 
-                        rule-data={ruleData}
-                        oncreate={handleCreate}
-                        onback={handleBack}>
-                    </c-wizard-step4>
-                </template>
+                    <!-- Step 4: Summary -->
+                    <template if:true={isStep4}>
+                        <c-wizard-step4 
+                            rule-data={ruleData}
+                            oncreate={handleCreate}
+                            onback={handleBack}>
+                        </c-wizard-step4>
+                    </template>
+
+                </div>
 
             </div>
-
-        </div>
-    </div>
-    <div class="slds-backdrop slds-backdrop_open"></div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
 </template>
