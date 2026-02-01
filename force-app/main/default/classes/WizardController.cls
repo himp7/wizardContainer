@@ -5,7 +5,7 @@ public with sharing class WizardController {
     public static TriggerTypeResponse getTriggerTypes() {
         TriggerTypeResponse response = new TriggerTypeResponse();
         try {
-            List<Trigger_Config__mdt> configs = [
+            List<Trigger_Config__mdt> configs = [ 
                 SELECT Label, Value__c, Field_API_Name__c, DeveloperName
                 FROM Trigger_Config__mdt
                 WHERE Type__c = 'Category' 
