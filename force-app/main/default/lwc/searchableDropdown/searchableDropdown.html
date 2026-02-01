@@ -1,0 +1,100 @@
+<template>
+    <div class="slds-form-element">
+        <label class="slds-form-element__label" for="search-input">
+            <abbr class="slds-required" title="required">* </abbr>
+            {label}
+        </label>
+        <div class="slds-form-element__control">
+            <div class="slds-combobox_container">
+                <div class={dropdownClass} role="combobox" aria-expanded={isOpen} aria-haspopup="listbox">
+                    
+                    <!-- Search Input -->
+                    <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                        <input
+                            type="text"
+                            id="search-input"
+                            class="slds-input slds-combobox__input"
+                            aria-autocomplete="list"
+                            aria-controls="listbox-id"
+                            placeholder={placeholder}
+                            value={searchTerm}
+                            oninput={handleSearch}
+                            onfocus={handleFocus}
+                            onblur={handleBlur}
+                        />
+                        <span class="slds-icon_container slds-icon-utility-search slds-input__icon slds-input__icon_right">
+                            <lightning-icon icon-name="utility:search" size="x-small" alternative-text="Search"></lightning-icon>
+                        </span>
+                    </div>
+
+                    <!-- Selected Pills -->
+                    <template if:true={selectedValues.length}>
+                        <div class="slds-m-top_x-small" role="listbox" aria-label="Selected options">
+                            <ul class="slds-listbox slds-listbox_horizontal slds-listbox_inline">
+                                <template for:each={selectedPills} for:item="pill">
+                                    <li key={pill.value} class="slds-listbox-item">
+                                        <span class="slds-pill" title={pill.label}>
+                                            <span class="slds-pill__label slds-truncate" title={pill.label}>{pill.label}</span>
+                                            <button class="slds-button slds-button_icon slds-pill__remove"
+                                                    data-value={pill.value}
+                                                    onclick={handlePillRemove}>
+                                                <lightning-icon icon-name="utility:close" size="x-small"
+                                                   ></lightning-icon>
+                                            </button>
+                                        </span>
+                                    </li>
+                                </template>
+                                <template if:true={hasOverflow}>
+                                    <li class="slds-listbox-item">
+                                        <span class="slds-badge">+{overflowCount} more</span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
+
+                    <!-- Dropdown List -->
+                    <div id="listbox-id" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox">
+                        <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                            <template if:true={hasFilteredOptions}>
+                                <template for:each={filteredOptions} for:item="option">
+                                    <li key={option.value} role="presentation" class="slds-listbox__item">
+                                        <div
+                                            class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small"
+                                            role="option"
+                                            data-value={option.value}
+                                            onclick={handleOptionClick}>
+                                            
+                                            <span class="slds-media__figure">
+                                                <lightning-input
+                                                    type="checkbox"
+                                                    checked={option.isSelected}
+                                                    data-value={option.value}
+                                                    onclick={handleCheckboxClick}>
+                                                </lightning-input>
+                                            </span>
+                                            
+                                            <span class="slds-media__body">
+                                                <span class="slds-truncate" title={option.label}>
+                                                    {option.label}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </li>
+                                </template>
+                            </template>
+                            <template if:false={hasFilteredOptions}>
+                                <li role="presentation" class="slds-listbox__item">
+                                    <div class="slds-align_absolute-center slds-p-around_medium">
+                                        <span class="slds-text-color_weak">No options found</span>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

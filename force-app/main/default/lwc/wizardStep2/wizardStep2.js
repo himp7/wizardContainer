@@ -1,0 +1,284 @@
+import { LightningElement, api, track } from 'lwc';
+import getTriggerTypes from '@salesforce/apex/WizardController.getTriggerTypes';
+import getTriggerOptions from '@salesforce/apex/WizardController.getTriggerOptions';
+
+export default class WizardStep2 extends LightningElement {
+    
+    @api ruleData;
+    
+    @track triggerTypes = [];
+    @track selectedCategories = []; // Array of category objects: {label, value, apiName}
+    @track triggerOptionsMap = new Map(); // Map<categoryValue, {label, value, apiName, options[]}>
+    @track selectedOptionsMap = new Map(); // Map<categoryValue, selectedOptionValues[]>
+    
+    selectedCategory = ''; // Currently selected in dropdown
+    currentTriggerOptions = []; // Options for currently selected category
+    errorMessage = '';
+    
+    // Client-side cache
+    triggerTypesLoaded = false;
+    triggerOptionsCache = new Map(); // Map<category, options[]>
+
+    connectedCallback() {
+        this.loadTriggerTypes();
+        this.loadExistingData();
+    }
+
+    loadExistingData() {
+        // If coming back from next step, restore data
+        if (this.ruleData && this.ruleData.triggerTypes && this.ruleData.triggerTypes.length > 0) {
+            this.selectedCategories = [...this.ruleData.triggerTypes];
+            if (this.ruleData.triggerOptionsMap) {
+                this.selectedOptionsMap = new Map(Object.entries(this.ruleData.triggerOptionsMap));
+            }
+        }
+    }
+
+    async loadTriggerTypes() {
+        if (this.triggerTypesLoaded) {
+            return;
+        }
+
+        try {
+            const response = await getTriggerTypes();
+            
+            if (response.success) {
+                this.triggerTypes = response.triggerTypes;
+                this.triggerTypesLoaded = true;
+            } else {
+                this.errorMessage = response.errorMessage;
+            }
+        } catch (error) {
+            this.errorMessage = error.body?.message || 'Error loading trigger types';
+        }
+    }
+
+    async handleCategoryChange(event) {
+        const categoryValue = event.detail.value;
+        
+        if (!categoryValue) {
+            this.selectedCategory = '';
+            this.currentTriggerOptions = [];
+            return;
+        }
+
+        // Check if already selected
+        if (this.selectedCategories.some(cat => cat.value === categoryValue)) {
+            this.errorMessage = 'This category is already selected';
+            this.selectedCategory = '';
+            return;
+        }
+
+        // Check max limit
+        if (this.selectedCategories.length >= 2) {
+            this.errorMessage = 'Maximum 2 categories allowed';
+            this.selectedCategory = '';
+            return;
+        }
+
+        this.selectedCategory = categoryValue;
+        this.errorMessage = '';
+
+        // Load options for this category
+        await this.loadTriggerOptions(categoryValue);
+
+        // Add to selected categories
+        const selectedCategoryObj = this.triggerTypes.find(t => t.value === categoryValue);
+        if (selectedCategoryObj) {
+            this.selectedCategories = [...this.selectedCategories, {
+                label: selectedCategoryObj.label,
+                value: selectedCategoryObj.value,
+                apiName: selectedCategoryObj.apiName
+            }];
+            
+            // Initialize empty selection for this category
+            this.selectedOptionsMap.set(categoryValue, []);
+        }
+    }
+
+    async loadTriggerOptions(category) {
+        // Check cache first
+        if (this.triggerOptionsCache.has(category)) {
+            this.currentTriggerOptions = this.triggerOptionsCache.get(category);
+            return;
+        }
+
+        try {
+            const response = await getTriggerOptions({ category });
+            
+            if (response.success) {
+                this.currentTriggerOptions = response.options;
+                
+                // Cache the options
+                this.triggerOptionsCache.set(category, response.options);
+            } else {
+                this.errorMessage = response.errorMessage;
+            }
+        } catch (error) {
+            this.errorMessage = error.body?.message || 'Error loading trigger options';
+        }
+    }
+
+    handleCategoryRemove(event) {
+        const categoryValue = event.detail.name;
+        
+        // Remove from selected categories
+        this.selectedCategories = this.selectedCategories.filter(cat => cat.value !== categoryValue);
+        
+        // Remove associated options
+        this.selectedOptionsMap.delete(categoryValue);
+        
+        // Clear current selection if it was this category
+        if (this.selectedCategory === categoryValue) {
+            this.selectedCategory = '';
+            this.currentTriggerOptions = [];
+        }
+
+        this.errorMessage = '';
+    }
+
+    handleOptionSelect(event) {
+        const { value, isSelected } = event.detail;
+        
+        if (!this.selectedCategory) {
+            return;
+        }
+
+        // Get current selections for this category
+        let currentSelections = this.selectedOptionsMap.get(this.selectedCategory) || [];
+        
+        if (isSelected) {
+            // Add option
+            if (!currentSelections.includes(value)) {
+                currentSelections = [...currentSelections, value];
+            }
+        } else {
+            // Remove option
+            currentSelections = currentSelections.filter(v => v !== value);
+        }
+
+        this.selectedOptionsMap.set(this.selectedCategory, currentSelections);
+    }
+
+    handlePillRemove(event) {
+        const { category, value } = event.detail;
+        
+        let currentSelections = this.selectedOptionsMap.get(category) || [];
+        currentSelections = currentSelections.filter(v => v !== value);
+        this.selectedOptionsMap.set(category, currentSelections);
+    }
+
+    handleBack() {
+        this.dispatchEvent(new CustomEvent('back'));
+    }
+
+    handleNext() {
+        if (!this.validateStep()) {
+            return;
+        }
+
+        // Prepare data
+        const triggerOptionsMap = {};
+        this.selectedOptionsMap.forEach((options, category) => {
+            triggerOptionsMap[category] = options;
+        });
+
+        const stepData = {
+            triggerTypes: this.selectedCategories,
+            triggerOptionsMap: triggerOptionsMap
+        };
+
+        this.dispatchEvent(new CustomEvent('stepdata', {
+            detail: {
+                step: 2,
+                data: stepData,
+                action: 'next'
+            }
+        }));
+    }
+
+    validateStep() {
+        // Must have at least 1 category
+        if (this.selectedCategories.length === 0) {
+            this.errorMessage = 'Please select at least one trigger type category';
+            return false;
+        }
+
+        // Each selected category must have at least 1 option
+        for (let category of this.selectedCategories) {
+            const options = this.selectedOptionsMap.get(category.value) || [];
+            if (options.length === 0) {
+                this.errorMessage = `Please select at least one option for ${category.label}`;
+                return false;
+            }
+        }
+
+        this.errorMessage = '';
+        return true;
+    }
+
+    // Computed properties
+    get triggerTypeOptions() {
+        return this.triggerTypes.map(t => ({
+            label: t.label,
+            value: t.value
+        }));
+    }
+
+    get isCategoryDropdownDisabled() {
+        return this.selectedCategories.length >= 2;
+    }
+
+    get hasSelectedCategories() {
+        return this.selectedCategories.length > 0;
+    }
+
+    get selectedCategoriesDisplay() {
+        return this.selectedCategories;
+    }
+
+    get showOptionsDropdown() {
+        return this.selectedCategory && this.currentTriggerOptions.length > 0;
+    }
+
+    get currentSelectedOptions() {
+        return this.selectedOptionsMap.get(this.selectedCategory) || [];
+    }
+
+    get hasSelectedOptions() {
+        return this.selectedOptionsMap.size > 0 && 
+               Array.from(this.selectedOptionsMap.values()).some(opts => opts.length > 0);
+    }
+
+    get categoriesWithOptions() {
+        const result = [];
+        
+        this.selectedCategories.forEach(category => {
+            const selectedOptionValues = this.selectedOptionsMap.get(category.value) || [];
+            
+            if (selectedOptionValues.length > 0) {
+                // Get full option objects from cache
+                const cachedOptions = this.triggerOptionsCache.get(category.value) || [];
+                const pills = selectedOptionValues.map(optValue => {
+                    const option = cachedOptions.find(o => o.value === optValue);
+                    return {
+                        label: option ? option.label : optValue,
+                        value: optValue
+                    };
+                });
+
+                result.push({
+                    name: category.value,
+                    label: category.label,
+                    options: pills
+                });
+            }
+        });
+
+        return result;
+    }
+
+    get isNextDisabled() {
+        return this.selectedCategories.length === 0;
+    }
+}

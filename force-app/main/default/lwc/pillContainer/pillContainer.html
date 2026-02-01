@@ -1,0 +1,17 @@
+<template>
+    <div class="slds-pill_container">
+        <template if:true={hasPills}>
+            <template for:each={pills} for:item="pill">
+                <lightning-pill
+                    key={pill.value}
+                    label={pill.label}
+                    name={pill.value}
+                    onremove={handleRemove}>
+                </lightning-pill>
+            </template>
+        </template>
+        <template if:false={hasPills}>
+            <span class="slds-text-color_weak slds-text-body_small">No options selected</span>
+        </template>
+    </div>
+</template>
