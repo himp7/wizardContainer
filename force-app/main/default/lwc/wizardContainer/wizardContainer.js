@@ -8,14 +8,16 @@ export default class WizardContainer extends LightningElement {
     
     @track currentStep = 1;
     @track ruleData = {
-        ruleName: '',
-        description: '',
-        isActive: true,
-        triggerTypes: [],
-        triggerOptionsMap: {},
-        caseType: '',
-        quantity: null
-    };
+    ruleName: '',
+    description: '',
+    isActive: true,
+    triggerTypes: [],
+    triggerOptionsMap: {},
+    caseType: '',
+    daysBefore: null,           // NEW
+    caseDescription: '',        // NEW
+    location: false             // NEW
+};
 
     // Step visibility getters
     get currentStepName() {
@@ -55,8 +57,12 @@ export default class WizardContainer extends LightningElement {
                 break;
             case 3:
                 this.ruleData.caseType = data.caseType;
-                this.ruleData.quantity = data.quantity;
+                this.ruleData.daysBefore = data.daysBefore;          // NEW
+                this.ruleData.caseDescription = data.caseDescription; // NEW
+                this.ruleData.location = data.location;               // NEW
+                this.ruleData.priority = data.priority;     
                 break;
+
         }
 
         // Navigate based on action
@@ -118,18 +124,21 @@ export default class WizardContainer extends LightningElement {
     }
 
     resetWizard() {
-        // Reset to initial state
-        this.currentStep = 1;
-        this.ruleData = {
-            ruleName: '',
-            description: '',
-            isActive: true,
-            triggerTypes: [],
-            triggerOptionsMap: {},
-            caseType: '',
-            quantity: null
-        };
-    }
+    this.currentStep = 1;
+    this.ruleData = {
+        ruleName: '',
+        description: '',
+        isActive: true,
+        triggerTypes: [],
+        triggerOptionsMap: {},
+        caseType: '',
+        priority : '',
+        daysBefore: null,           // NEW
+        caseDescription: '',        // NEW
+        location: false,             // NEW
+        priority: ''
+    };
+}
 
     showToast(title, message, variant) {
         const evt = new ShowToastEvent({

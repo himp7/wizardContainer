@@ -91,4 +91,44 @@
         <type>Number</type>
         <unique>false</unique>
     </fields>
+
+    <!-- Days Before Field -->
+<fields>
+    <fullName>Days_Before__c</fullName>
+    <externalId>false</externalId>
+    <label>Days Before</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+    <description>Number of days before case creation</description>
+</fields>
+<!-- Add this field to the existing Trigger_Config__mdt.object-meta.xml -->
+<fields>
+    <fullName>Rendering_Type__c</fullName>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Rendering Type</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Searchable Dropdown</fullName>
+                <default>true</default>
+                <label>Searchable Dropdown</label>
+            </value>
+            <value>
+                <fullName>Manual Input</fullName>
+                <default>false</default>
+                <label>Manual Input</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</fields>
 </CustomObject>

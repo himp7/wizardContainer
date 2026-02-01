@@ -54,4 +54,15 @@ export default class WizardStep4 extends LightningElement {
             }
         }));
     }
+get priorityBadgeClass() {
+    const priority = this.ruleData.priority;
+    if (priority === 'High' || priority === 'Critical') {
+        return 'slds-badge slds-theme_error';
+    } else if (priority === 'Medium') {
+        return 'slds-badge slds-theme_warning';
+    } else if (priority === 'Low') {
+        return 'slds-badge';
+    }
+    return 'slds-badge';
+}
 }

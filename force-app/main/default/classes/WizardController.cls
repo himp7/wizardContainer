@@ -1,34 +1,5 @@
 public with sharing class WizardController {
     
-    // Fetch all trigger type CATEGORIES
-    @AuraEnabled
-    public static TriggerTypeResponse getTriggerTypes() {
-        TriggerTypeResponse response = new TriggerTypeResponse();
-        try {
-            List<Trigger_Config__mdt> configs = [ 
-                SELECT Label, Value__c, Field_API_Name__c, DeveloperName
-                FROM Trigger_Config__mdt
-                WHERE Type__c = 'Category' 
-                AND IsActive__c = true
-                ORDER BY Sort_Order__c ASC, Label ASC
-            ];
-            
-            for (Trigger_Config__mdt config : configs) {
-                response.triggerTypes.add(new TriggerTypeWrapper(
-                    config.Label,
-                    config.Value__c,
-                    config.Field_API_Name__c,
-                    config.DeveloperName
-                ));
-            }
-            response.success = true;
-        } catch (Exception e) {
-            response.success = false;
-            response.errorMessage = e.getMessage();
-            System.debug('Error in getTriggerTypes: ' + e.getMessage());
-        }
-        return response;
-    }
     
     // Fetch OPTIONS for specific category
     @AuraEnabled
@@ -88,6 +59,10 @@ public with sharing class WizardController {
             rule.Case_Type__c = ruleData.caseType;
             rule.Quantity__c = ruleData.quantity;
             rule.Is_Active__c = true;
+            rule.Case_Type__c = ruleData.caseType;
+rule.Days_Before__c = ruleData.daysBefore;              // NEW
+rule.Case_Description__c = ruleData.caseDescription;    // NEW
+rule.Location__c = ruleData.location != null ? ruleData.location : false;  // NEW
             
             // Dynamically populate trigger fields
             if (ruleData.triggerOptionsMap != null && !ruleData.triggerOptionsMap.isEmpty()) {
@@ -165,19 +140,53 @@ public with sharing class WizardController {
         }
     }
     
+
+
     public class TriggerTypeWrapper {
-        @AuraEnabled public String label;
-        @AuraEnabled public String value;
-        @AuraEnabled public String apiName;
-        @AuraEnabled public String category;
-        
-        public TriggerTypeWrapper(String label, String value, String apiName, String category) {
-            this.label = label;
-            this.value = value;
-            this.apiName = apiName;
-            this.category = category;
-        }
+    @AuraEnabled public String label;
+    @AuraEnabled public String value;
+    @AuraEnabled public String apiName;
+    @AuraEnabled public String category;
+    @AuraEnabled public String renderingType;  // NEW
+    
+    public TriggerTypeWrapper(String label, String value, String apiName, String category, String renderingType) {
+        this.label = label;
+        this.value = value;
+        this.apiName = apiName;
+        this.category = category;
+        this.renderingType = renderingType;
     }
+}
+
+@AuraEnabled
+public static TriggerTypeResponse getTriggerTypes() {
+    TriggerTypeResponse response = new TriggerTypeResponse();
+    try {
+        List<Trigger_Config__mdt> configs = [
+            SELECT Label, Value__c, Field_API_Name__c, DeveloperName, Rendering_Type__c
+            FROM Trigger_Config__mdt
+            WHERE Type__c = 'Category' 
+            AND IsActive__c = true
+            ORDER BY Sort_Order__c ASC, Label ASC
+        ];
+        
+        for (Trigger_Config__mdt config : configs) {
+            response.triggerTypes.add(new TriggerTypeWrapper(
+                config.Label,
+                config.Value__c,
+                config.Field_API_Name__c,
+                config.DeveloperName,
+                config.Rendering_Type__c  // NEW
+            ));
+        }
+        response.success = true;
+    } catch (Exception e) {
+        response.success = false;
+        response.errorMessage = e.getMessage();
+        System.debug('Error in getTriggerTypes: ' + e.getMessage());
+    }
+    return response;
+}
     
     public class TriggerOptionResponse {
         @AuraEnabled public Boolean success;
@@ -205,13 +214,55 @@ public with sharing class WizardController {
         @AuraEnabled public String message;
         @AuraEnabled public Id ruleId;
     }
-    
-    public class RuleDataWrapper {
-        public String ruleName;
-        public String description;
-        public Map<String, List<String>> triggerOptionsMap;
-        public Boolean isActive;                      // NEW: Added isActive
-        public String caseType;
-        public Integer quantity;
+
+@AuraEnabled
+public static PriorityOptionResponse getPriorityOptions() {
+    PriorityOptionResponse response = new PriorityOptionResponse();
+    try {
+        List<Trigger_Config__mdt> configs = [
+            SELECT Label, Value__c
+            FROM Trigger_Config__mdt
+            WHERE Type__c = 'Priority' 
+            AND IsActive__c = true
+            ORDER BY Sort_Order__c ASC, Label ASC
+        ];
+        
+        for (Trigger_Config__mdt config : configs) {
+            response.options.add(new OptionWrapper(
+                config.Label,
+                config.Value__c
+            ));
+        }
+        response.success = true;
+    } catch (Exception e) {
+        response.success = false;
+        response.errorMessage = e.getMessage();
+        System.debug('Error in getPriorityOptions: ' + e.getMessage());
     }
+    return response;
+}
+
+public class PriorityOptionResponse {
+    @AuraEnabled public Boolean success;
+    @AuraEnabled public String errorMessage;
+    @AuraEnabled public List<OptionWrapper> options;
+    
+    public PriorityOptionResponse() {
+        this.options = new List<OptionWrapper>();
+    }
+}
+
+public class RuleDataWrapper {
+    public String ruleName;
+    public String description;
+    public Boolean isActive;
+    public Map<String, List<String>> triggerOptionsMap;
+    public String caseType;
+    public String priority;              // NEW
+    public Integer daysBefore;
+    public String caseDescription;
+    public Boolean location;
+    public Integer quantity;
+}
+
 }

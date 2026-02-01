@@ -95,33 +95,30 @@
                     </div>
                 </div>
 
-                <!-- Section 3: Case Creation Details -->
-                <div class="summary-section slds-m-bottom_large">
-                    <div class="section-header slds-m-bottom_small">
-                        <lightning-icon 
-                            icon-name="standard:case" 
-                            size="small" 
-                            class="slds-m-right_x-small">
-                        </lightning-icon>
-                        <h3 class="slds-text-heading_small">Case Creation Details</h3>
-                    </div>
-                    <div class="section-content">
-                        <dl class="slds-list_horizontal slds-wrap">
-                            <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Case Type">
-                                Case Type:
-                            </dt>
-                            <dd class="slds-item_detail slds-truncate" title={ruleData.caseType}>
-                                {ruleData.caseType}
-                            </dd>
-                            <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Quantity">
-                                Quantity:
-                            </dt>
-                            <dd class="slds-item_detail slds-truncate" title={ruleData.quantity}>
-                                {ruleData.quantity}
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
+             <!-- In Section 3: Case Creation Details -->
+<dt class="slds-item_label slds-text-color_weak slds-truncate" title="Case Type">
+    Case Type:
+</dt>
+<dd class="slds-item_detail slds-truncate" title={ruleData.caseType}>
+    {ruleData.caseType}
+</dd>
+
+<!-- NEW: Priority -->
+<dt class="slds-item_label slds-text-color_weak slds-truncate" title="Priority">
+    Priority:
+</dt>
+<dd class="slds-item_detail slds-truncate" title={ruleData.priority}>
+    <span class={priorityBadgeClass}>
+        {ruleData.priority}
+    </span>
+</dd>
+
+<dt class="slds-item_label slds-text-color_weak slds-truncate" title="Days Before">
+    Days Before:
+</dt>
+<dd class="slds-item_detail slds-truncate" title={ruleData.daysBefore}>
+    {ruleData.daysBefore}
+</dd>
 
             </div>
 

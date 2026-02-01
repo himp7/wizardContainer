@@ -9,42 +9,84 @@
                 </p>
             </div>
 
-            <!-- Case Type -->
-<div class="slds-m-bottom_medium">
-    <lightning-combobox
-        label="Case Type"
-        name="caseType"
-        placeholder="Select a case type"
-        options={caseTypeOptions}
-        value={caseType}
-        onchange={handleInputChange}
-        required
-        message-when-value-missing="Case type is required">
-    </lightning-combobox>
-</div>
-            <!-- Quantity -->
+            <!-- Case Type Combobox -->
             <div class="slds-m-bottom_medium">
-                <lightning-input
-                    label="Quantity"
-                    name="quantity"
-                    type="number"
-                    value={quantity}
+                <lightning-combobox
+                    label="Case Type"
+                    name="caseType"
+                    placeholder="Select case type"
+                    options={caseTypeOptions}
+                    value={caseType}
                     onchange={handleInputChange}
                     required
-                    min="1"
-                    max="100"
+                    message-when-value-missing="Case type is required">
+                </lightning-combobox>
+            </div>
+
+            <!-- Priority Combobox (Metadata-driven) -->
+            <div class="slds-m-bottom_medium">
+                <lightning-combobox
+                    label="Priority"
+                    name="priority"
+                    placeholder="Select priority"
+                    options={priorityOptions}
+                    value={priority}
+                    onchange={handleInputChange}
+                    required
+                    message-when-value-missing="Priority is required">
+                </lightning-combobox>
+            </div>
+
+            <!-- Days Before -->
+            <div class="slds-m-bottom_medium">
+                <lightning-input
+                    label="Days Before"
+                    name="daysBefore"
+                    type="number"
+                    value={daysBefore}
+                    onchange={handleInputChange}
+                    required
+                    min="0"
+                    max="365"
                     step="1"
-                    message-when-value-missing="Quantity is required"
-                    message-when-range-underflow="Quantity must be at least 1"
-                    message-when-range-overflow="Quantity cannot exceed 100"
-                    formatter="decimal"
-                    placeholder="Enter number of cases to create">
+                    message-when-value-missing="Days before is required"
+                    message-when-range-underflow="Days before must be at least 0"
+                    message-when-range-overflow="Days before cannot exceed 365"
+                    placeholder="Enter number of days">
                 </lightning-input>
                 <div class="slds-m-top_x-small">
                     <p class="slds-text-body_small slds-text-color_weak">
-                        Number of cases to be created when this rule is triggered (1-100)
+                        Number of days before the case should be created (0-365)
                     </p>
                 </div>
+            </div>
+
+            <!-- Case Description -->
+            <div class="slds-m-bottom_medium">
+                <lightning-textarea
+                    label="Case Description"
+                    name="caseDescription"
+                    value={caseDescription}
+                    onchange={handleInputChange}
+                    max-length="32768"
+                    placeholder="Enter case description"
+                    class="slds-m-bottom_small">
+                </lightning-textarea>
+            </div>
+
+            <!-- Location Checkbox -->
+            <div class="slds-m-bottom_medium">
+                <lightning-input
+                    type="checkbox"
+                    label="Include Location"
+                    name="location"
+                    checked={location}
+                    onchange={handleCheckboxChange}
+                    class="slds-m-bottom_small">
+                </lightning-input>
+                <p class="slds-text-body_small slds-text-color_weak">
+                    Include location information in the case
+                </p>
             </div>
 
             <!-- Error Message -->

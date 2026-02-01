@@ -7,18 +7,18 @@ export default class WizardStep2 extends LightningElement {
     @api ruleData;
     
     @track triggerTypes = [];
-    @track selectedCategories = []; // Array of category objects: {label, value, apiName}
+    @track selectedCategories = [];
+    @track selectedOptionsMap = {};
+    @track currentRenderingType = ''; // Track rendering type of selected category
     
-    // Changed: Use @track for proper reactivity
-    @track selectedOptionsMap = {}; // Object instead of Map for better reactivity
-    
-    selectedCategory = ''; // Currently selected in dropdown
-    currentTriggerOptions = []; // Options for currently selected category
+    selectedCategory = '';
+    currentTriggerOptions = [];
+    manualInputValue = '';
     errorMessage = '';
     
     // Client-side cache
     triggerTypesLoaded = false;
-    triggerOptionsCache = new Map(); // Map<category, options[]>
+    triggerOptionsCache = new Map();
 
     connectedCallback() {
         this.loadTriggerTypes();
@@ -26,7 +26,6 @@ export default class WizardStep2 extends LightningElement {
     }
 
     loadExistingData() {
-        // If coming back from next step, restore data
         if (this.ruleData && this.ruleData.triggerTypes && this.ruleData.triggerTypes.length > 0) {
             this.selectedCategories = [...this.ruleData.triggerTypes];
             if (this.ruleData.triggerOptionsMap) {
@@ -60,17 +59,17 @@ export default class WizardStep2 extends LightningElement {
         if (!categoryValue) {
             this.selectedCategory = '';
             this.currentTriggerOptions = [];
+            this.currentRenderingType = '';
+            this.manualInputValue = '';
             return;
         }
 
-        // Check if already selected
         if (this.selectedCategories.some(cat => cat.value === categoryValue)) {
             this.errorMessage = 'This category is already selected';
             this.selectedCategory = '';
             return;
         }
 
-        // Check max limit
         if (this.selectedCategories.length >= 2) {
             this.errorMessage = 'Maximum 2 categories allowed';
             this.selectedCategory = '';
@@ -79,29 +78,35 @@ export default class WizardStep2 extends LightningElement {
 
         this.selectedCategory = categoryValue;
         this.errorMessage = '';
+        this.manualInputValue = '';
 
-        // Load options for this category
-        await this.loadTriggerOptions(categoryValue);
-
-        // Add to selected categories
+        // Get selected category object with rendering type
         const selectedCategoryObj = this.triggerTypes.find(t => t.value === categoryValue);
         if (selectedCategoryObj) {
+            this.currentRenderingType = selectedCategoryObj.renderingType || 'Searchable Dropdown';
+            
+            // Add to selected categories
             this.selectedCategories = [...this.selectedCategories, {
                 label: selectedCategoryObj.label,
                 value: selectedCategoryObj.value,
-                apiName: selectedCategoryObj.apiName
+                apiName: selectedCategoryObj.apiName,
+                renderingType: this.currentRenderingType
             }];
             
-            // Initialize empty selection for this category
+            // Initialize empty selection
             this.selectedOptionsMap = {
                 ...this.selectedOptionsMap,
                 [categoryValue]: []
             };
+
+            // Load options only if searchable dropdown
+            if (this.currentRenderingType === 'Searchable Dropdown') {
+                await this.loadTriggerOptions(categoryValue);
+            }
         }
     }
 
     async loadTriggerOptions(category) {
-        // Check cache first
         if (this.triggerOptionsCache.has(category)) {
             this.currentTriggerOptions = this.triggerOptionsCache.get(category);
             return;
@@ -112,8 +117,6 @@ export default class WizardStep2 extends LightningElement {
             
             if (response.success) {
                 this.currentTriggerOptions = response.options;
-                
-                // Cache the options
                 this.triggerOptionsCache.set(category, response.options);
             } else {
                 this.errorMessage = response.errorMessage;
@@ -123,21 +126,37 @@ export default class WizardStep2 extends LightningElement {
         }
     }
 
+    handleManualInputChange(event) {
+        this.manualInputValue = event.target.value;
+        
+        // Update the selection with manual input
+        if (this.manualInputValue.trim()) {
+            this.selectedOptionsMap = {
+                ...this.selectedOptionsMap,
+                [this.selectedCategory]: [this.manualInputValue.trim()]
+            };
+        } else {
+            this.selectedOptionsMap = {
+                ...this.selectedOptionsMap,
+                [this.selectedCategory]: []
+            };
+        }
+    }
+
     handleCategoryRemove(event) {
         const categoryValue = event.detail.name;
         
-        // Remove from selected categories
         this.selectedCategories = this.selectedCategories.filter(cat => cat.value !== categoryValue);
         
-        // Remove associated options
         const newOptionsMap = { ...this.selectedOptionsMap };
         delete newOptionsMap[categoryValue];
         this.selectedOptionsMap = newOptionsMap;
         
-        // Clear current selection if it was this category
         if (this.selectedCategory === categoryValue) {
             this.selectedCategory = '';
             this.currentTriggerOptions = [];
+            this.currentRenderingType = '';
+            this.manualInputValue = '';
         }
 
         this.errorMessage = '';
@@ -150,26 +169,20 @@ export default class WizardStep2 extends LightningElement {
             return;
         }
 
-        // Get current selections for this category
         let currentSelections = this.selectedOptionsMap[this.selectedCategory] || [];
         
         if (isSelected) {
-            // Add option if not already present
             if (!currentSelections.includes(value)) {
                 currentSelections = [...currentSelections, value];
             }
         } else {
-            // Remove option
             currentSelections = currentSelections.filter(v => v !== value);
         }
 
-        // Update the map with new array - triggers reactivity
         this.selectedOptionsMap = {
             ...this.selectedOptionsMap,
             [this.selectedCategory]: currentSelections
         };
-        
-        console.log('Updated selections for', this.selectedCategory, ':', currentSelections);
     }
 
     handlePillRemove(event) {
@@ -178,11 +191,15 @@ export default class WizardStep2 extends LightningElement {
         let currentSelections = this.selectedOptionsMap[category] || [];
         currentSelections = currentSelections.filter(v => v !== value);
         
-        // Update the map - triggers reactivity
         this.selectedOptionsMap = {
             ...this.selectedOptionsMap,
             [category]: currentSelections
         };
+
+        // Clear manual input if it matches
+        if (this.selectedCategory === category && this.manualInputValue === value) {
+            this.manualInputValue = '';
+        }
     }
 
     handleBack() {
@@ -194,7 +211,6 @@ export default class WizardStep2 extends LightningElement {
             return;
         }
 
-        // Prepare data
         const stepData = {
             triggerTypes: this.selectedCategories,
             triggerOptionsMap: this.selectedOptionsMap
@@ -210,17 +226,15 @@ export default class WizardStep2 extends LightningElement {
     }
 
     validateStep() {
-        // Must have at least 1 category
         if (this.selectedCategories.length === 0) {
             this.errorMessage = 'Please select at least one trigger type category';
             return false;
         }
 
-        // Each selected category must have at least 1 option
         for (let category of this.selectedCategories) {
             const options = this.selectedOptionsMap[category.value] || [];
             if (options.length === 0) {
-                this.errorMessage = `Please select at least one option for ${category.label}`;
+                this.errorMessage = `Please select or enter at least one option for ${category.label}`;
                 return false;
             }
         }
@@ -249,8 +263,12 @@ export default class WizardStep2 extends LightningElement {
         return this.selectedCategories;
     }
 
-    get showOptionsDropdown() {
-        return this.selectedCategory && this.currentTriggerOptions.length > 0;
+    get isSearchableDropdown() {
+        return this.currentRenderingType === 'Searchable Dropdown';
+    }
+
+    get isManualInput() {
+        return this.currentRenderingType === 'Manual Input';
     }
 
     get currentSelectedOptions() {
@@ -272,8 +290,17 @@ export default class WizardStep2 extends LightningElement {
         if (!this.selectedCategory) return [];
         
         const selectedOptionValues = this.selectedOptionsMap[this.selectedCategory] || [];
-        const cachedOptions = this.triggerOptionsCache.get(this.selectedCategory) || [];
         
+        // For manual input, just return the value as label
+        if (this.isManualInput) {
+            return selectedOptionValues.map(optValue => ({
+                label: optValue,
+                value: optValue
+            }));
+        }
+        
+        // For searchable dropdown, get labels from cache
+        const cachedOptions = this.triggerOptionsCache.get(this.selectedCategory) || [];
         return selectedOptionValues.map(optValue => {
             const option = cachedOptions.find(o => o.value === optValue);
             return {
@@ -295,15 +322,23 @@ export default class WizardStep2 extends LightningElement {
             const selectedOptionValues = this.selectedOptionsMap[category.value] || [];
             
             if (selectedOptionValues.length > 0) {
-                // Get full option objects from cache
-                const cachedOptions = this.triggerOptionsCache.get(category.value) || [];
-                const pills = selectedOptionValues.map(optValue => {
-                    const option = cachedOptions.find(o => o.value === optValue);
-                    return {
-                        label: option ? option.label : optValue,
+                let pills;
+                
+                if (category.renderingType === 'Manual Input') {
+                    pills = selectedOptionValues.map(optValue => ({
+                        label: optValue,
                         value: optValue
-                    };
-                });
+                    }));
+                } else {
+                    const cachedOptions = this.triggerOptionsCache.get(category.value) || [];
+                    pills = selectedOptionValues.map(optValue => {
+                        const option = cachedOptions.find(o => o.value === optValue);
+                        return {
+                            label: option ? option.label : optValue,
+                            value: optValue
+                        };
+                    });
+                }
 
                 result.push({
                     name: category.value,
