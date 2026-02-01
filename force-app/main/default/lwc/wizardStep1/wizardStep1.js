@@ -7,6 +7,7 @@ export default class WizardStep1 extends LightningElement {
     
     ruleName = '';
     description = '';
+    isActive = true; // Default to checked
     errorMessage = '';
 
     connectedCallback() {
@@ -14,17 +15,19 @@ export default class WizardStep1 extends LightningElement {
         if (this.ruleData) {
             this.ruleName = this.ruleData.ruleName || '';
             this.description = this.ruleData.description || '';
+            this.isActive = this.ruleData.isActive !== undefined ? this.ruleData.isActive : true;
         }
     }
 
     handleInputChange(event) {
         const field = event.target.name;
-        const value = event.target.value;
         
         if (field === 'ruleName') {
-            this.ruleName = value;
+            this.ruleName = event.target.value;
         } else if (field === 'description') {
-            this.description = value;
+            this.description = event.target.value;
+        } else if (field === 'isActive') {
+            this.isActive = event.target.checked;
         }
         
         // Clear error when user types
@@ -40,7 +43,8 @@ export default class WizardStep1 extends LightningElement {
         // Send data to parent
         const stepData = {
             ruleName: this.ruleName,
-            description: this.description
+            description: this.description,
+            isActive: this.isActive
         };
 
         this.dispatchEvent(new CustomEvent('stepdata', {

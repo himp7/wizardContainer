@@ -210,6 +210,7 @@ public with sharing class WizardController {
         public String ruleName;
         public String description;
         public Map<String, List<String>> triggerOptionsMap;
+        public Boolean isActive;                      // NEW: Added isActive
         public String caseType;
         public Integer quantity;
     }

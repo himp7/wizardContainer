@@ -4,12 +4,13 @@ import saveRule from '@salesforce/apex/WizardController.saveRule';
 
 export default class WizardContainer extends LightningElement {
     
-    @api isOpen = false; // Controlled by parent component
+    @track isOpen = true; // Start open by default
     
     @track currentStep = 1;
     @track ruleData = {
         ruleName: '',
         description: '',
+        isActive: true,
         triggerTypes: [],
         triggerOptionsMap: {},
         caseType: '',
@@ -46,6 +47,7 @@ export default class WizardContainer extends LightningElement {
             case 1:
                 this.ruleData.ruleName = data.ruleName;
                 this.ruleData.description = data.description;
+                this.ruleData.isActive = data.isActive;
                 break;
             case 2:
                 this.ruleData.triggerTypes = data.triggerTypes;
@@ -73,7 +75,10 @@ export default class WizardContainer extends LightningElement {
         // Reset wizard state
         this.resetWizard();
         
-        // Dispatch close event to parent component
+        // Close the modal
+        this.isOpen = false;
+        
+        // Dispatch event to parent (if exists)
         this.dispatchEvent(new CustomEvent('close'));
     }
 
@@ -89,13 +94,18 @@ export default class WizardContainer extends LightningElement {
                 // Show success toast
                 this.showToast('Success', response.message, 'success');
                 
-                // Dispatch event to parent with rule ID
+                // Dispatch event to parent with rule ID (if exists)
                 this.dispatchEvent(new CustomEvent('rulesaved', {
                     detail: { ruleId: response.ruleId }
                 }));
                 
-                // Reset and close wizard
+                // Reset wizard state
                 this.resetWizard();
+                
+                // Close the modal
+                this.isOpen = false;
+                
+                // Dispatch close event
                 this.dispatchEvent(new CustomEvent('close'));
                 
             } else {
@@ -113,6 +123,7 @@ export default class WizardContainer extends LightningElement {
         this.ruleData = {
             ruleName: '',
             description: '',
+            isActive: true,
             triggerTypes: [],
             triggerOptionsMap: {},
             caseType: '',
@@ -129,11 +140,11 @@ export default class WizardContainer extends LightningElement {
         this.dispatchEvent(evt);
     }
 
-    // Public API methods (optional - parent can also just set isOpen)
+    // Public API to open/close from parent
     @api
     openWizard() {
         this.resetWizard();
-        // Parent should set isOpen = true
+        this.isOpen = true;
     }
 
     @api

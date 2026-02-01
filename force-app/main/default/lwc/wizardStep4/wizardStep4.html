@@ -30,6 +30,7 @@
                             <dd class="slds-item_detail slds-truncate" title={ruleData.ruleName}>
                                 {ruleData.ruleName}
                             </dd>
+                            
                             <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Description">
                                 Description:
                             </dt>
@@ -39,6 +40,25 @@
                                 </template>
                                 <template if:false={ruleData.description}>
                                     <span class="slds-text-color_weak">—</span>
+                                </template>
+                            </dd>
+                            
+                            <!-- NEW: Is Active Display -->
+                            <dt class="slds-item_label slds-text-color_weak slds-truncate" title="Status">
+                                Status:
+                            </dt>
+                            <dd class="slds-item_detail slds-truncate">
+                                <template if:true={ruleData.isActive}>
+                                    <span class="slds-badge slds-theme_success">
+                                        <lightning-icon icon-name="utility:check" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                        Active
+                                    </span>
+                                </template>
+                                <template if:false={ruleData.isActive}>
+                                    <span class="slds-badge">
+                                        <lightning-icon icon-name="utility:ban" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                        Inactive
+                                    </span>
                                 </template>
                             </dd>
                         </dl>
