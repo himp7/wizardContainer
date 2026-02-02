@@ -263,13 +263,3 @@ Override SLDS classes in component CSS files.
 3. Commit changes (`git commit -m 'Add AmazingFeature'`)
 4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open Pull Request
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Acknowledgments
-
-- Salesforce Lightning Design System
-- LWC Documentation
-- Salesforce Developer Community
